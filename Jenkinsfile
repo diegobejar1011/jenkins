@@ -6,7 +6,6 @@ pipeline {
         EC2_USER = 'ubuntu'
         EC2_IP = '98.81.79.234'
         REMOTE_PATH = '/home/ubuntu/jenkins'
-        SSH_KEY = credentials('ssh-key-ec2')
     }
 
     stages {
@@ -25,15 +24,30 @@ pipeline {
 
         stage('Deploy') {
             steps {
-                sh """
-                ssh -i $SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP '
-                    cd $REMOTE_PATH &&
-                    git pull origin main &&
-                    npm ci &&
-                    pm2 restart health-api || pm2 start server.js --name health-api
-                '
-                """
+                sshagent(credentials: ['ssh-key-ec2']) {
+                    sh """
+                    ssh -o StrictHostKeyChecking=no ${EC2_USER}@${EC2_IP} '
+                        cd ${REMOTE_PATH} &&
+                        git pull origin main &&
+                        npm ci &&
+                        if pm2 list | grep -q "health-api"; then
+                            pm2 restart health-api
+                        else
+                            pm2 start server.js --name health-api
+                        fi
+                    '
+                    """
+                }
             }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Despliegue exitoso.'
+        }
+        failure {
+            echo '❌ Hubo un error en el pipeline.'
         }
     }
 }
