@@ -9,7 +9,8 @@ pipeline {
         stage('Set Environment') {
             steps {
                 script {
-                    def branch = env.GIT_BRANCH;
+                    // Elimina el prefijo "origin/" si está presente
+                    def branch = env.GIT_BRANCH.replaceFirst(/^origin\//, '')
 
                     switch(branch) {
                         case 'main':
@@ -33,6 +34,9 @@ pipeline {
                         default:
                             error "Unsupported branch: ${branch}"
                     }
+
+                    // Guarda el nombre limpio de la rama para usar en el git pull
+                    env.BRANCH_NAME_CLEAN = branch
                 }
             }
         }
@@ -55,7 +59,7 @@ pipeline {
                 sh """
                 ssh -i $SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP '
                     cd $REMOTE_PATH &&
-                    git pull origin ${env.GIT_BRANCH} &&
+                    git pull origin ${env.BRANCH_NAME_CLEAN} &&
                     npm ci &&
                     pm2 restart health-api || pm2 start server.js --name health-api
                 '
