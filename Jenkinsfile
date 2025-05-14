@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        NODE_ENV = 'production'
+        NODE_ENV = 'qa'
         EC2_USER = 'ubuntu'
         EC2_IP = '3.211.128.84'
         REMOTE_PATH = '/home/ubuntu/jenkins'
@@ -12,7 +12,7 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/diegobejar1011/jenkins.git'
+                git branch: 'qa', url: 'https://github.com/diegobejar1011/jenkins.git'
             }
         }
 
