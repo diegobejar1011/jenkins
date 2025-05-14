@@ -57,12 +57,13 @@ pipeline {
         stage('Deploy') {
             steps {
                 sh """
-                ssh -i $SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP '
-                    cd $REMOTE_PATH &&
-                    git pull origin ${env.BRANCH_NAME_CLEAN} &&
-                    npm ci &&
-                    pm2 restart health-api || pm2 start server.js --name health-api
-                '
+                    ssh -i $SSH_KEY -o StrictHostKeyChecking=no $EC2_USER@$EC2_IP '
+                        cd $REMOTE_PATH &&
+                        git checkout ${env.BRANCH_NAME_CLEAN} &&
+                        git pull --rebase origin ${env.BRANCH_NAME_CLEAN} &&
+                        npm ci &&
+                        pm2 restart health-api || pm2 start server.js --name health-api
+                    '
                 """
             }
         }
